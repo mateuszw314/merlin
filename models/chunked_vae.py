@@ -20,7 +20,7 @@ class CHUNKED_VAE(nn.Module):
         self.do2 = nn.Dropout(p=0.3)
         self.d2 = nn.Linear(hidden_dim, input_dim)
 
-        self.mu_prior = nn.Linear(cfg.continual.n_tasks, latent_dim)
+        self.mu_prior = nn.Linear(cfg.continual.n_tasks, latent_dim) # todo: do we need to know the specific number of tasks? This is suboptimal...
         self.log_var_prior = nn.Linear(cfg.continual.n_tasks, latent_dim)
 
         self.chunk_embeddings = nn.Parameter(data=torch.Tensor(num_chunks, latent_dim),requires_grad=True)
@@ -31,23 +31,23 @@ class CHUNKED_VAE(nn.Module):
         log_variance = self.log_var(act)
         return mean, log_variance
 
-    def reparameterize(self, mean, log_var):
+    def reparameterize(self, mean, log_var): # in principle, draw z from the prior given by N(mean, var), where log_var = log(var) ofc
         sd = torch.exp(0.5 * log_var)
         eps = torch.rand_like(sd)
         return mean + eps * sd
 
-    def decoder(self, z, chunk_id):
+    def decoder(self, z, chunk_id): # chunk id = task id
         chunk_embed = self.chunk_embeddings[chunk_id]
         comp = torch.cat((chunk_embed, z))
         act = torch.tanh(self.do2(self.d1(comp)))
         weights = torch.tanh(self.d2(act))
         return weights
 
-    def forward(self, x, c, chunk_id):
+    def forward(self, x, c, chunk_id): # x - classifier parameters (psi in the article), c - one-hot encoded task, chunk_id - for scalability, we learn/generate network parameters in portions (chunks) + the chunk_id condition instead of throwing in all parametwrs at once
         m, l_v = self.encoder(x)
         z = self.reparameterize(m, l_v)
         x_hat = self.decoder(z, chunk_id)
         m_prior = self.mu_prior(c)
         l_v_prior = self.log_var_prior(c)
 
-        return x_hat, m, l_v, m_prior, l_v_prior
+        return x_hat, m, l_v, m_prior, l_v_prior # used in train_block_chunk in consolidate.py

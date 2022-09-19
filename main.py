@@ -14,7 +14,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 
-def set_seed(seed):
+def set_seed(seed): #global function for setting pseudorandom seed in every environment
     cfg.seed = seed
     torch.cuda.manual_seed_all(cfg.seed)
     torch.manual_seed(cfg.seed)

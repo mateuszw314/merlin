@@ -1,5 +1,6 @@
 import numpy as np
 from easydict import EasyDict as edict
+from torch import device
 
 root = edict()
 cfg = root
@@ -45,7 +46,7 @@ root.kernels.point_estimate = False
 root.kernels.encoder = 'ae'
 root.kernels.intermediate_test = False
 root.kernels.latent_dimension = 2
-root.kernels.n_pseudo_weights = 1
+root.kernels.n_pseudo_weights = 1 #z?
 root.kernels.n_finetune_src_models = 1
 root.kernels.ensembling = edict()
 root.kernels.ensembling.min_clf_accuracy = 80
@@ -132,7 +133,8 @@ def cfg_from_file(filename):
     Load a config file and merge it into the default options.
     """
     import yaml
+    from yaml import Loader
     with open(filename, 'r') as f:
-        yaml_cfg = edict(yaml.load(f))
+        yaml_cfg = edict(yaml.load(f, Loader=Loader))
 
     _merge_a_into_b(yaml_cfg, root)

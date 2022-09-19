@@ -12,7 +12,7 @@ def Xavier(m):
         m.bias.data.fill_(0.0)
 
 
-class SimpleNet_3x3(nn.Module):
+class SimpleNet_3x3(nn.Module): #simple CNN with RELU
     def __init__(self):
         super(SimpleNet_3x3, self).__init__()
         self.conv1 = nn.Conv2d(1, 20, kernel_size=3)
@@ -29,7 +29,7 @@ class SimpleNet_3x3(nn.Module):
         return x
 
 
-class SimpleNet_FC(nn.Module):
+class SimpleNet_FC(nn.Module): # FC - fully connected
     def __init__(self):
         nl = 2  # Number of layers
         nh = 50  # Number of hidden neurons

@@ -71,12 +71,13 @@ def train_vae(task, observed_tasks):
         for task_id in observed_tasks:
             prior_location = cfg.output_dir + '/pickles/prior_' + str(task_id) + '.pkl'
             prior_mean, prior_log_var = torch.load(prior_location)
-            task_prior = dist.Normal(prior_mean.to(cfg.device), torch.sqrt(torch.exp(prior_log_var.to(cfg.device))))
+            #task_prior = dist.Normal(prior_mean.to(cfg.device), torch.sqrt(torch.exp(prior_log_var.to(cfg.device))))
+            task_prior = dist.Normal(prior_mean, torch.sqrt(torch.exp(prior_log_var)))
 
             best_acc = -1
             best_weight = None
             for i in range(cfg.kernels.n_pseudo_weights):
-                z = task_prior.rsample().squeeze_().to(cfg.device)
+                z = task_prior.rsample().squeeze_().to(cfg.device) # our latent variable
                 if cfg.kernels.chunking.enable:
                     pseudo_x = decode_chunked_model(model, z)
                 else:
@@ -107,6 +108,7 @@ def train_block_chunk(x, model, task, opt, c, index=0, e=0, num_epochs=0, datalo
 
     # Padding zeros for the last chunk
     x = torch.cat((x, torch.zeros(cfg.kernels.chunking.chunk_size - cfg.kernels.chunking.last_chunk_size).to(cfg.device)))
+    #x = torch.cat((x, torch.zeros(cfg.kernels.chunking.chunk_size - cfg.kernels.chunking.last_chunk_size)))
 
     # Split the parameters 'x' into chunks
     chunks = torch.split(x, cfg.kernels.chunking.chunk_size)
@@ -120,7 +122,7 @@ def train_block_chunk(x, model, task, opt, c, index=0, e=0, num_epochs=0, datalo
         prior = dist.Normal(mean_prior, torch.sqrt(torch.exp(log_var_prior)))
         kl_div = dist.kl_divergence(q, prior).sum()
 
-        loss = kl_div
+        loss = kl_div #here and below we build the loss function by adding two terms
 
         if cfg.kernels.use_reconstruction_loss:
             loss += reconstruction_loss
